@@ -3,7 +3,7 @@
   Description : ESP32-CAM MQTT Image Transfer
 **********************************************************************/
 #include "esp_camera.h"
-#include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <PubSubClient.h>
 // CAMERA_MODEL is defined in platformio.ini
 #include "../include/camera_pins.h"
@@ -11,10 +11,16 @@
 // ===========================
 // Configuration
 // ===========================
-const char* ssid     = "";       // TODO: Modificați cu SSID-ul rețelei voastre
-const char* password = "";     // TODO: Modificați cu parola rețelei voastre
-const char* mqtt_server = ""; // TODO: Modificați cu IP-ul calculatorului (ip addr / ipconfig)
-const int mqtt_port = 1883;
+#if __has_include("secrets.h")
+  #include "secrets.h"
+#else
+  #define SECRET_WIFI_SSID     ""
+  #define SECRET_WIFI_PASSWORD ""
+  #define SECRET_MQTT_SERVER   ""
+  #define SECRET_MQTT_PORT     8883
+
+  #define SECRET_CA_CERT ""
+#endif
 
 // Topics
 const char* TOPIC_COMMAND = "ssproject/commands";
@@ -149,7 +155,8 @@ void setup() {
     Serial.print(".");
   }
   Serial.printf("\nWiFi connected! IP: %s\n", WiFi.localIP().toString().c_str());
-
+  
+  espClient.setCACert(ca_cert);
   client.setServer(mqtt_server, mqtt_port);
   client.setCallback(callback);
   client.setBufferSize(65000);
